@@ -1,0 +1,5 @@
+../Src/main.c:28:6:check_cable_connection	3
+../Src/main.c:49:6:display_phy_config	5
+../Src/main.c:69:6:handle_error	1
+../Src/main.c:78:6:on_eexpert_topic_sense	1
+../Src/main.c:85:5:main	3

@@ -1,0 +1,10 @@
+01:36:44 **** Incremental Build of configuration Debug for project 13_w5500_mqtt_publish_sensor_data ****
+make -j8 all 
+arm-none-eabi-size  13_w5500_mqtt_publish_sensor_data.elf 
+   text	   data	    bss	    dec	    hex	filename
+  31556	    296	   3672	  35524	   8ac4	13_w5500_mqtt_publish_sensor_data.elf
+Finished building: default.size.stdout
+ 
+
+01:36:44 Build Finished. 0 errors, 0 warnings. (took 700ms)
+

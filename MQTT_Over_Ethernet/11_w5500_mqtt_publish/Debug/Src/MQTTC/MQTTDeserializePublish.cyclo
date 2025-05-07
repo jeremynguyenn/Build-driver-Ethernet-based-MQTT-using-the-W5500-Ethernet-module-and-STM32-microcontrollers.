@@ -1,0 +1,2 @@
+../Src/MQTTC/MQTTDeserializePublish.c:36:5:MQTTDeserialize_publish	5
+../Src/MQTTC/MQTTDeserializePublish.c:82:5:MQTTDeserialize_ack	2

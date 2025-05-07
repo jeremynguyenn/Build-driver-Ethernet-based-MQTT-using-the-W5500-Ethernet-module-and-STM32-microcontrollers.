@@ -1,0 +1,10 @@
+17:57:02 **** Incremental Build of configuration Debug for project 10_w5500_paho_mqtt ****
+make -j8 all 
+arm-none-eabi-size  10_w5500_paho_mqtt.elf 
+   text	   data	    bss	    dec	    hex	filename
+  23056	    200	   3272	  26528	   67a0	10_w5500_paho_mqtt.elf
+Finished building: default.size.stdout
+ 
+
+17:57:03 Build Finished. 0 errors, 0 warnings. (took 721ms)
+

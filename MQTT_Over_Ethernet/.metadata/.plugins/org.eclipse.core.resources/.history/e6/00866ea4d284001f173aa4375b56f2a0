@@ -1,0 +1,350 @@
+//#include <stdio.h>
+//#include "stm32f4xx.h"
+//#include "fpu.h"
+//#include "uart.h"
+//#include "timebase.h"
+//#include "bsp.h"
+//#include "adc.h"
+//#include "w5500_driver.h"
+//#include "MQTTClient.h"
+//
+//#define BUFF_SIZE 		128
+//
+//MQTTClient mqtt_client;
+//Network network;
+//MQTTPacket_connectData connect_data =  MQTTPacket_connectData_initializer;
+//MQTTMessage mqtt_msg = {QOS0,1,0,1,"EExpert",8};
+//
+//uint8_t broker_ip[] ={91,121,93,94};//test.mosquitto.org
+//uint16_t broker_port =  1883;
+//
+//
+//uint8_t tx_buffer[BUFF_SIZE];
+//uint8_t rx_buffer[BUFF_SIZE];
+//
+//
+//wiz_PhyConf current_phy_conf;
+//
+//void check_cable_connection(void)
+//{
+//	uint8_t cable_status;
+//
+//	do{
+//
+//		printf("\r\nGetting cable status...\r\n");
+//		ctlwizchip(CW_GET_PHYLINK,(void *)&cable_status);
+//
+//		if(cable_status ==  PHY_LINK_OFF)
+//		{
+//			printf("No cable detected ...\r\n");
+//			delay(1000);
+//		}
+//
+//	}while(cable_status ==  PHY_LINK_OFF);
+//
+//	printf("Cable connected...\r\n");
+//
+//}
+//
+//void display_phy_config(void)
+//{
+//	wiz_PhyConf phy_conf;
+//	ctlwizchip(CW_GET_PHYCONF,(void*)&phy_conf);
+//
+//	if(phy_conf.by == PHY_CONFBY_HW)
+//	{
+//		printf("\n\rPHY is currently configured by hardware.");
+//	}
+//	else{
+//		printf("\n\rPHY is currently configured by software.");
+//
+//	}
+//	printf("\r\nSTATUS: Autonegotiation %s",(phy_conf.mode == PHY_MODE_AUTONEGO) ? "Enabled" : "Disabled");
+//	printf("\r\nSTATUS: Duplex Mode: %s",(phy_conf.duplex == PHY_DUPLEX_FULL) ? "Full Duplex" : "Half Duplex");
+//	printf("\r\nSTATUS: Speed: %dMbps",(phy_conf.speed == PHY_SPEED_10) ? 10 : 100);
+//  printf("\r\n...");
+//
+//}
+//
+//void handle_error(const char * message)
+//{
+//	printf("ERROR: %s\r\n",message);
+//
+//	while(1){
+//		//Do something e.g. blink LED
+//	}
+//}
+//int main()
+//{
+//	/*Enable FPU*/
+//	fpu_enable();
+//
+//	/*Initialize timebase*/
+//	timebase_init();
+//
+//	/*Initialize debug UART*/
+//	debug_uart_init();
+//
+//
+//
+//	/*Initialize LED*/
+//	led_init();
+//
+//	/*Initialize Push button*/
+//	button_init();
+//
+//	/*Initialize ADC*/
+//	pa1_adc_init();
+//
+//	/*Start conversion*/
+//	start_conversion();
+//
+//    wizchip_cs_pin_init();
+//    w5500_spi_init();
+//    w5500_init();
+//
+//    check_cable_connection();
+//    display_phy_config();
+//
+//    current_phy_conf.by =  PHY_CONFBY_SW;
+//    current_phy_conf.duplex =  PHY_DUPLEX_FULL;
+//    current_phy_conf.mode   =  PHY_MODE_AUTONEGO;
+//    current_phy_conf.speed =  PHY_SPEED_10;
+//
+//    ctlwizchip(CW_SET_PHYCONF,(void*)&current_phy_conf);
+//
+//
+//    display_phy_config();
+//
+//    printf("\n\r*****************************MQTTClient Initialization*******************\r\n");
+//
+//    /*Configure the client connection data*/
+//    connect_data.MQTTVersion =  3;
+//    connect_data.willFlag = 0;
+//    connect_data.clientID.cstring = "eexpert015";
+//    connect_data.keepAliveInterval = 60;
+//    connect_data.cleansession =  1;
+//
+//
+//    NewNetwork(&network,1);
+//
+//    printf("Connecting to MQTT Broker...\r\n");
+//
+//    if(ConnectNetwork(&network,broker_ip,broker_port) != SOCK_OK)
+//    {
+//    	handle_error("Cannot connect to broker.");
+//    }
+//
+//
+//     /*Initialize the client with the network parameters*/
+//    MQTTClientInit(&mqtt_client, &network, 1000, tx_buffer,sizeof(tx_buffer), rx_buffer, sizeof(rx_buffer));
+//
+//    printf("Sending MQTT Connect Packet...\r\n");
+//
+//    /*Attempt to connect with the broker*/
+//
+//    if(MQTTConnect(&mqtt_client,&connect_data) != 0 )
+//    {
+//    	handle_error("MQTT connection failed.");
+//
+//    }
+//
+//    printf("MQTT Connection successful.\n\r");
+//
+//	while(1)
+//	{
+//         /*Publish message to a specific topic*/
+//		MQTTPublish(&mqtt_client, "eexpert11/topic1", &mqtt_msg);
+//		delay(1000);
+//	}
+//}
+//
+
+
+#include <stdio.h>
+#include "stm32f4xx.h"
+#include "fpu.h"
+#include "uart.h"
+#include "timebase.h"
+#include "bsp.h"
+#include "adc.h"
+#include "spi.h"
+#include "w5500_driver.h"
+
+#include "MQTTClient.h"
+#include "mqtt_interface.h"
+
+
+MQTTClient mqtt_client;
+Network network;
+MQTTPacket_connectData connect_data=MQTTPacket_connectData_initializer;
+MQTTMessage mqtt_msg={QOS0,1,0,1,"Hello!",14};
+
+uint8_t tx_buffer[128];
+uint8_t	rx_buffer[128];
+
+uint8_t broker_ip[]={91,121,93,94};//test.mosquitto.org
+uint16_t broker_port = 1883;
+
+
+wiz_PhyConf current_phy_conf;
+
+/**@@NOTE:
+ * If you are experincing problems with the not being able to get
+ * an assigned ip address from the dhcp.
+ * This may be due to insufficient power supply to the ethernet module.
+ * In this case you will see the green light of the ethernet connector
+ * turning off and on. If you see this use the 5v pin of the ucleo board
+ * to power the module rather than the 3.3v pin***/
+
+
+/**
+ * @brief Check the status of the Ethernet cable connection.
+ */
+void check_cable_connection(void)
+{
+    uint8_t cable_status;
+
+    do
+    {
+        printf("\r\nGetting cable status...\r\n");
+        ctlwizchip(CW_GET_PHYLINK, (void*) &cable_status);
+
+        if (cable_status == PHY_LINK_OFF)
+        {
+            printf("No cable detected! Retrying...\r\n");
+            delay(1000);
+        }
+    } while (cable_status == PHY_LINK_OFF);
+
+    printf("Cable connected!\r\n");
+}
+
+
+/**
+ * @brief Retrieve and print the PHY configuration.
+ */
+void display_phy_config(void)
+{
+    wiz_PhyConf phy_conf;
+    ctlwizchip(CW_GET_PHYCONF, (void*) &phy_conf);
+
+    if (phy_conf.by == PHY_CONFBY_HW)
+    {
+        printf("\r\nPHY is configured by hardware.");
+    }
+    else
+    {
+        printf("\r\nPHY is configured by software.");
+    }
+
+    printf("\r\nSTATUS: Autonegotiation %s",
+           (phy_conf.mode == PHY_MODE_AUTONEGO) ? "Enabled" : "Disabled");
+
+    printf("\r\nSTATUS: Duplex Mode: %s",
+           (phy_conf.duplex == PHY_DUPLEX_FULL) ? "Full Duplex" : "Half Duplex");
+
+    printf("\r\nSTATUS: Speed: %dMbps",
+           (phy_conf.speed == PHY_SPEED_10) ? 10 : 100);
+}
+
+void handle_error(const char* message)
+{
+    // Log the error message
+    printf("ERROR: %s\n", message);
+
+    // Optionally, we can add recovery or reset mechanism here
+    // For example, system_restart() or error_logging_service();
+
+    // Infinite loop as a last resort (if recovery is not an option)
+    while (1)
+    {
+        // You could blink an LED or signal error status in some way
+    }
+}
+
+
+
+int main()
+{
+	/*Enable FPU*/
+	fpu_enable();
+
+	/*Initialize timebase*/
+	timebase_init();
+
+	/*Initialize debug UART*/
+	debug_uart_init();
+
+
+	/*Initialize Push button*/
+	button_init();
+
+	/*Initialize ADC*/
+	pa1_adc_init();
+
+	wizchip_cs_pin_init();
+
+	/*Start conversion*/
+	start_conversion();
+
+	/*Initialize spi*/
+	w5500_spi_init();
+
+
+
+	w5500_init();
+
+    /* Explicitly configure PHY to be set by software */
+    current_phy_conf.by = PHY_CONFBY_SW;
+    current_phy_conf.duplex = PHY_DUPLEX_FULL;
+    current_phy_conf.mode = PHY_MODE_AUTONEGO;
+    current_phy_conf.speed = PHY_SPEED_10;
+    ctlwizchip(CW_SET_PHYCONF, (void*) &current_phy_conf);
+
+    /* Check Ethernet cable connection */
+    check_cable_connection();
+
+    /* Display current PHY configuration */
+    display_phy_config();
+
+    printf("\r\n************ MQTT Client Initialization ************\r\n");
+
+    // Setup MQTT client connection data.
+    connect_data.willFlag = 0;
+    connect_data.MQTTVersion = 3;
+    connect_data.clientID.cstring = "eexp014";
+    connect_data.keepAliveInterval = 60;
+    connect_data.cleansession = 1;
+
+	  NewNetwork(&network, 1);
+
+	  printf("Connecting to MQTT Broker ...");
+
+	  if(ConnectNetwork(&network, broker_ip, broker_port)!=SOCK_OK)
+	  {
+		  handle_error("Cannot connect to broker.");
+	  }
+
+
+	  // Initialize MQTT client with network parameters.
+	    MQTTClientInit(&mqtt_client, &network, 1000, tx_buffer, sizeof(tx_buffer), rx_buffer, sizeof(rx_buffer));
+
+	    printf("Sending MQTT connect packet...\r\n");
+
+	    // Attempt to connect to the MQTT broker.
+	    if (MQTTConnect(&mqtt_client, &connect_data) != 0)
+	    {
+	        handle_error("MQTT connection failed.");
+	    }
+
+	    printf("MQTT connection successful.\r\n");
+
+		while(1)
+		 {
+	        // Publish message to a specific topic.
+	        MQTTPublish(&mqtt_client, "eexpert10/topic1", &mqtt_msg);
+	        delay(1000);
+		  }
+}
+
